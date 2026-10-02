@@ -1,8 +1,8 @@
 {
-  "version": 1,
+  "version": 2,
   "files": {
-    "dashboard.py": "7f6d9b3b06326d62b45548eeefa67d5d41386a5f34e407b7d39f13dbe94fd731",
-    "dashboard.html": "e8f0f2803d1681402afca8da7074a4ceca8afef0aa86e15bcff04c6671a0ed5a",
+    "dashboard.py": "e6039991a47794fe3fb13ef8ce7a6ab8b1aded603cf985e6a599981176c68c5a",
+    "dashboard.html": "85964d3144e3eea96bfc3eb217e5a544ebd82d1ce439f7e01154e61bce84a49a",
     "pipeline.py": "ec3f9e0b1983c79865dbef939cfe0440a33d08b09553bbd170e328a3691e1ef8",
     "render.py": "cdcee2f93e65a7652ded559aeddbc93713562053a334dbe2e810a9aeac6c8dd0",
     "graphic.py": "cfac5206f4f622d7873be272a7aaf65ba645ee1b0239f989ff22fbc40f6aee19",
