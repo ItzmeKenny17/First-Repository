@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import re
+import shutil
 import subprocess
 import sys
 import threading
@@ -44,6 +46,12 @@ def write(path: Path, data: dict) -> None:
 def log(message: str) -> None:
     with LOCK:
         WORKER["log"] = (WORKER["log"] + [message.rstrip()])[-40:]
+
+
+def missing_dependencies() -> list[str]:
+    missing = [name for name in ("ffmpeg", "ffprobe") if shutil.which(name) is None]
+    missing += [name for name in ("mediapipe", "PIL", "scipy") if importlib.util.find_spec(name) is None]
+    return missing
 
 
 def source_catalog() -> list[Path]:
@@ -101,7 +109,7 @@ def auto_loop() -> None:
             control = read(CONTROL, {})
             today = datetime.now(ZONE).date().isoformat()
             previous = read(AUTO_RUNTIME, {}).get("last_auto_day")
-            if (control.get("auto_render_enabled", True) and control.get("automation_enabled", True)
+            if (not missing_dependencies() and control.get("auto_render_enabled", True) and control.get("automation_enabled", True)
                     and control.get("render_enabled", True) and previous != today and snapshot()["counts"]["backlog"]):
                 count = min(5, max(1, int(control.get("auto_render_daily_limit", 5))))
                 if start_render(count, None):
@@ -166,6 +174,7 @@ def snapshot() -> dict:
         worker = {**WORKER, "log": WORKER["log"][-16:]}
     return {"time": datetime.now(timezone.utc).isoformat(), "last_run": state.get("last_run"),
             "control": control, "worker": worker, "connections": connections, "posting_ready": bool(ready),
+            "missing_dependencies": missing_dependencies(),
             "auto_last_day": read(AUTO_RUNTIME, {}).get("last_auto_day"),
             "next_post": next_post.isoformat() if next_post else None, "drafts": drafts,
             "counts": {"sources": len(source_files), "backlog": len(backlog), "rendered": len(rendered),
@@ -297,6 +306,10 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(400, {"error": "A selected source renders once"})
                 return
             control = read(CONTROL, {})
+            missing = missing_dependencies()
+            if missing:
+                self._json(409, {"error": "Install or add to PATH: " + ", ".join(missing)})
+                return
             if not control.get("automation_enabled", True) or not control.get("render_enabled", True):
                 self._json(409, {"error": "Rendering is paused. Resume first."})
                 return
